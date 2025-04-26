@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>ACI Employee Information Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Noto+Serif+Bengali&display=swap');
+
+    body {
+      font-family: 'Roboto', 'Noto Serif Bengali', sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header img {
+      width: 60px;
+    }
+
+    .header h2 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .search-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-area input {
+      flex: 0 0 250px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .section h3 {
+      margin-top: 0;
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .save-btn {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script>
+    function clearForm() {
+      document.getElementById('rowIndex').value = '';
+      const fields = document.querySelectorAll(".form-grid input");
+      fields.forEach(field => field.value = '');
+      document.getElementById('staffId').removeAttribute('readonly');
+    }
+
+    function loadStaffIds() {
+      google.script.run.withSuccessHandler(function(ids) {
+        const datalist = document.getElementById('staffIdList');
+        datalist.innerHTML = '';
+        ids.forEach(function(id) {
+          const option = document.createElement('option');
+          option.value = id;
+          datalist.appendChild(option);
+        });
+      }).getAllStaffIds();
+    }
+
+    function fetchEmployeeManual() {
+      const staffId = document.getElementById("staffIdSearch").value.trim();
+      if (staffId) fetchEmployee(staffId);
+    }
+
+    function fetchEmployee(staffId) {
+      clearForm();
+      google.script.run.withSuccessHandler(populateForm).getEmployeeData(staffId);
+    }
+
+    function populateForm(data) {
+      if (!data) {
+        alert("Note: No employee found. Please add a new employee.");
+        return;
+      }
+      document.getElementById('rowIndex').value = data.rowIndex;
+      const ids = ["name","staffId","designation","department","territoryCode","regionCode","depotLocation","teamName","personalMobile","officialMobile","personalEmail","officialEmail","experienceAtJoining","supervisorName","supervisorStaffId","supervisorEmail","maritalStatus","spouseName","livingChildren","child1Name","child1DOB","child2Name","child2DOB","functionSubDepartment"];
+      ids.forEach((id, index) => {
+        document.getElementById(id).value = data.employee[index] || '';
+      });
+      document.getElementById('staffId').setAttribute('readonly', true);
+    }
+
+    function updateEmployee() {
+      const rowIndex = document.getElementById('rowIndex').value;
+      const updatedData = Array.from(document.querySelectorAll(".form-grid input")).map(el => el.value);
+
+      if (!updatedData[1]) {
+        alert('Staff ID cannot be empty!');
+        return;
+      }
+
+      google.script.run.withSuccessHandler(() => {
+        alert('✅ Employee information saved successfully!');
+        clearForm();
+        loadStaffIds();
+      }).updateEmployeeData(Number(rowIndex) || 0, updatedData);
+    }
+
+    window.onload = loadStaffIds;
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://i.ibb.co/k64vvzLC/aci-logo.png" alt="ACI Logo">
+      <h2>Employee Information Editor</h2>
+    </div>
+
+    <div class="search-area">
+      <input type="text" id="staffIdSearch" placeholder="🔍 Search Staff ID" list="staffIdList">
+      <datalist id="staffIdList"></datalist>
+      <button onclick="fetchEmployeeManual()">Search</button>
+      <button onclick="clearForm()">➕ Add New Employee</button>
+    </div>
+
+    <input type="hidden" id="rowIndex">
+
+    <div class="section">
+      <h3>🧍 Personal Information</h3>
+      <div class="form-grid">
+        <div><label>Name (নাম)</label><input type="text" id="name"></div>
+        <div><label>Staff ID (স্টাফ আইডি)</label><input type="text" id="staffId"></div>
+        <div><label>Designation (পদবি)</label><input type="text" id="designation"></div>
+        <div><label>Department (ডিপার্ট্মেন্ট)</label><input type="text" id="department"></div>
+        <div><label>Territory Code (টেরিটরি কোড)</label><input type="text" id="territoryCode"></div>
+        <div><label>Region Code (রিজিওন কোড)</label><input type="text" id="regionCode"></div>
+        <div><label>Depot Location (ডিপোর লোকাশন)</label><input type="text" id="depotLocation"></div>
+        <div><label>Team Name (টিমের নাম)</label><input type="text" id="teamName"></div>
+        <div><label>Personal Mobile (ব্যক্তিগত মোবাইল নম্বর)</label><input type="text" id="personalMobile"></div>
+        <div><label>Official Mobile (অফিসিয়াল মোবাইল নম্বর)</label><input type="text" id="officialMobile"></div>
+        <div><label>Personal Email (ব্যক্তিগত ইমেইল এড্রেস)</label><input type="email" id="personalEmail"></div>
+        <div><label>Official Email (অফিসিয়াল ইমেইল এড্রেস)</label><input type="email" id="officialEmail"></div>
+        <div><label>Years of Relevant Experience (এসিআইতে জয়েনর সময় অভিজ্ঞতা)</label><input type="text" id="experienceAtJoining"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>👨‍💼 Supervisor Information</h3>
+      <div class="form-grid">
+        <div><label>Supervisor Name (সুপারভাইজরের নাম)</label><input type="text" id="supervisorName"></div>
+        <div><label>Supervisor Staff ID (সুপারভাইজরের স্টাফ আইডি)</label><input type="text" id="supervisorStaffId"></div>
+        <div><label>Supervisor Official Email (সুপারভাইজরের অফিসিয়াল ইমেইল এড্রেস)</label><input type="email" id="supervisorEmail"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>👨‍👩‍👧‍👦 Family Information</h3>
+      <div class="form-grid">
+        <div><label>Marital Status (বৈবাহিক অবস্থা)</label><input type="text" id="maritalStatus"></div>
+        <div><label>Spouse Name (স্বামী/স্ত্রীর নাম)</label><input type="text" id="spouseName"></div>
+        <div><label>Number of Living Children (জীবিত সন্তানের সংখ্যা)</label><input type="number" id="livingChildren"></div>
+        <div><label>First Child Name (প্রথম সন্তানের নাম)</label><input type="text" id="child1Name"></div>
+        <div><label>First Child DOB (প্রথম সন্তানের জন্মতারিখ)</label><input type="date" id="child1DOB"></div>
+        <div><label>Second Child Name (দ্বিতীয় সন্তানের নাম)</label><input type="text" id="child2Name"></div>
+        <div><label>Second Child DOB (দ্বিতীয় সন্তানের জন্মতারিখ)</label><input type="date" id="child2DOB"></div>
+        <div><label>Function/Sub Department</label><input type="text" id="functionSubDepartment"></div>
+      </div>
+    </div>
+
+    <div class="save-btn">
+      <button onclick="updateEmployee()">💾 Save / Update</button>
+    </div>
+  </div>
+</body>
+</html>
