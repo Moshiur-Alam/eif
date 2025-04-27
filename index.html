@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>ACI Employee Information Editor</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACI Employee Information Editor</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Noto+Serif+Bengali&display=swap');
-
     body {
       font-family: 'Roboto', 'Noto Serif Bengali', sans-serif;
       background: #f2f2f2;
       padding: 20px;
       margin: 0;
     }
-
     .container {
       background: #fff;
       padding: 20px;
@@ -20,7 +19,6 @@
       max-width: 1200px;
       margin: auto;
     }
-
     .header {
       display: flex;
       align-items: center;
@@ -29,16 +27,13 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-
     .header img {
       width: 60px;
     }
-
     .header h2 {
       font-size: 24px;
       margin: 0;
     }
-
     .search-area {
       display: flex;
       flex-wrap: wrap;
@@ -47,11 +42,9 @@
       align-items: center;
       justify-content: center;
     }
-
     .search-area input {
       flex: 0 0 250px;
     }
-
     .section {
       margin-bottom: 30px;
       border: 1px solid #ddd;
@@ -59,7 +52,6 @@
       border-radius: 8px;
       background: #fafafa;
     }
-
     .section h3 {
       margin-top: 0;
       background: #e9ecef;
@@ -67,19 +59,16 @@
       border-radius: 6px;
       font-size: 18px;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 15px;
     }
-
     label {
       font-weight: bold;
       display: block;
       margin-bottom: 5px;
     }
-
     input, select {
       width: 100%;
       padding: 8px;
@@ -87,7 +76,6 @@
       border-radius: 4px;
       box-sizing: border-box;
     }
-
     button {
       padding: 10px 20px;
       background: #007bff;
@@ -97,86 +85,20 @@
       cursor: pointer;
       font-size: 16px;
     }
-
     button:hover {
       background: #0056b3;
     }
-
     .save-btn {
       text-align: center;
       margin-top: 20px;
     }
-
     @media (max-width: 600px) {
       .form-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
-
-  <script>
-    function clearForm() {
-      document.getElementById('rowIndex').value = '';
-      const fields = document.querySelectorAll(".form-grid input");
-      fields.forEach(field => field.value = '');
-      document.getElementById('staffId').removeAttribute('readonly');
-    }
-
-    function loadStaffIds() {
-      google.script.run.withSuccessHandler(function(ids) {
-        const datalist = document.getElementById('staffIdList');
-        datalist.innerHTML = '';
-        ids.forEach(function(id) {
-          const option = document.createElement('option');
-          option.value = id;
-          datalist.appendChild(option);
-        });
-      }).getAllStaffIds();
-    }
-
-    function fetchEmployeeManual() {
-      const staffId = document.getElementById("staffIdSearch").value.trim();
-      if (staffId) fetchEmployee(staffId);
-    }
-
-    function fetchEmployee(staffId) {
-      clearForm();
-      google.script.run.withSuccessHandler(populateForm).getEmployeeData(staffId);
-    }
-
-    function populateForm(data) {
-      if (!data) {
-        alert("Note: No employee found. Please add a new employee.");
-        return;
-      }
-      document.getElementById('rowIndex').value = data.rowIndex;
-      const ids = ["name","staffId","designation","department","territoryCode","regionCode","depotLocation","teamName","personalMobile","officialMobile","personalEmail","officialEmail","experienceAtJoining","supervisorName","supervisorStaffId","supervisorEmail","maritalStatus","spouseName","livingChildren","child1Name","child1DOB","child2Name","child2DOB","functionSubDepartment"];
-      ids.forEach((id, index) => {
-        document.getElementById(id).value = data.employee[index] || '';
-      });
-      document.getElementById('staffId').setAttribute('readonly', true);
-    }
-
-    function updateEmployee() {
-      const rowIndex = document.getElementById('rowIndex').value;
-      const updatedData = Array.from(document.querySelectorAll(".form-grid input")).map(el => el.value);
-
-      if (!updatedData[1]) {
-        alert('Staff ID cannot be empty!');
-        return;
-      }
-
-      google.script.run.withSuccessHandler(() => {
-        alert('✅ Employee information saved successfully!');
-        clearForm();
-        loadStaffIds();
-      }).updateEmployeeData(Number(rowIndex) || 0, updatedData);
-    }
-
-    window.onload = loadStaffIds;
-  </script>
 </head>
-
 <body>
   <div class="container">
     <div class="header">
@@ -185,8 +107,7 @@
     </div>
 
     <div class="search-area">
-      <input type="text" id="staffIdSearch" placeholder="🔍 Search Staff ID" list="staffIdList">
-      <datalist id="staffIdList"></datalist>
+      <input type="text" id="staffIdSearch" placeholder="🔍 Search Staff ID">
       <button onclick="fetchEmployeeManual()">Search</button>
       <button onclick="clearForm()">➕ Add New Employee</button>
     </div>
@@ -239,5 +160,67 @@
       <button onclick="updateEmployee()">💾 Save / Update</button>
     </div>
   </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzj-mP4KhEDdSk4sl-LD9t5mY6rEXguPpfPXtKmQOYly7aPxDfXKbBbdk3GnOnL8HRH/exec';
+
+    function clearForm() {
+      document.getElementById('rowIndex').value = '';
+      const fields = document.querySelectorAll(".form-grid input");
+      fields.forEach(field => field.value = '');
+      document.getElementById('staffId').removeAttribute('readonly');
+    }
+
+    function fetchEmployeeManual() {
+      const staffId = document.getElementById("staffIdSearch").value.trim();
+      if (staffId) {
+        fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action: "searchEmployee", staffId: staffId})
+        })
+        .then(response => response.json())
+        .then(data => populateForm(data))
+        .catch(error => alert('Error searching employee.'));
+      }
+    }
+
+    function populateForm(data) {
+      if (!data || !data.employee) {
+        alert("Note: No employee found. Please add a new employee.");
+        return;
+      }
+      document.getElementById('rowIndex').value = data.rowIndex;
+      const ids = ["name","staffId","designation","department","territoryCode","regionCode","depotLocation","teamName","personalMobile","officialMobile","personalEmail","officialEmail","experienceAtJoining","supervisorName","supervisorStaffId","supervisorEmail","maritalStatus","spouseName","livingChildren","child1Name","child1DOB","child2Name","child2DOB","functionSubDepartment"];
+      ids.forEach((id, index) => {
+        document.getElementById(id).value = data.employee[index] || '';
+      });
+      document.getElementById('staffId').setAttribute('readonly', true);
+    }
+
+    function updateEmployee() {
+      const rowIndex = document.getElementById('rowIndex').value;
+      const updatedData = Array.from(document.querySelectorAll(".form-grid input")).map(el => el.value);
+
+      if (!updatedData[1]) {
+        alert('Staff ID cannot be empty!');
+        return;
+      }
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: "saveEmployee", rowIndex: Number(rowIndex) || 0, updatedData: updatedData})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          alert('✅ Employee information saved successfully!');
+          clearForm();
+        }
+      })
+      .catch(error => alert('Error saving employee.'));
+    }
+  </script>
 </body>
 </html>
